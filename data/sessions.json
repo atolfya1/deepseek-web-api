@@ -18,8 +18,6 @@
     },
     "b5610bf8-24b5-410a-9460-f14db4ed7d59": {
       "lastResponseMessageId": 2,
-      "lastModelType": "default",
-      "modelType": "default",
       "updatedAt": 1792762858880,
       "turns": [
         {
@@ -30,11 +28,81 @@
           "role": "assistant",
           "content": "Hello"
         }
+      ],
+      "lastModelType": "default",
+      "modelType": "default"
+    },
+    "a7a5823d-c81f-4141-8aa8-eca70cee5b74": {
+      "lastResponseMessageId": 2,
+      "lastModelType": "default",
+      "modelType": "default",
+      "updatedAt": 1792775522458,
+      "turns": [
+        {
+          "role": "user",
+          "content": "سلام، فقط بگو سلام"
+        },
+        {
+          "role": "assistant",
+          "content": "سلام"
+        }
+      ]
+    },
+    "cbe9b24d-e8b8-4d25-baab-428932d39acd": {
+      "lastResponseMessageId": 2,
+      "lastModelType": "default",
+      "modelType": "default",
+      "updatedAt": 1792775546637,
+      "turns": [
+        {
+          "role": "user",
+          "content": "یک جمله بگو"
+        },
+        {
+          "role": "assistant",
+          "content": "امز روز خوبی برای شروع دوباره است."
+        }
+      ]
+    },
+    "898afc1d-cfbf-491b-9a39-3d51ebf8a87f": {
+      "lastResponseMessageId": 2,
+      "lastModelType": "default",
+      "modelType": "default",
+      "updatedAt": 1792775556035,
+      "turns": [
+        {
+          "role": "user",
+          "content": "سلام"
+        },
+        {
+          "role": "assistant",
+          "content": "سلام خوش آمدید 🌷 چطور میتوانم کمکتان کنم؟"
+        }
+      ]
+    },
+    "ae9e7eb1-74ca-4471-b996-c6b87cd88476": {
+      "lastResponseMessageId": 2,
+      "lastModelType": "default",
+      "modelType": "default",
+      "updatedAt": 1792775568764,
+      "turns": [
+        {
+          "role": "user",
+          "content": "سلام"
+        },
+        {
+          "role": "assistant",
+          "content": "سلام چطور می‌تونم کمکتون کنم؟"
+        }
       ]
     }
   },
   "convs": {
     "fp:user:hi there\n---\nassistant:Hi How's it going? What can I help you with today?": "e3d91d12-941c-446f-8d08-d88f40bd8ced",
-    "fp:user:Say hello in one word\n---\nassistant:Hello": "b5610bf8-24b5-410a-9460-f14db4ed7d59"
+    "fp:user:Say hello in one word\n---\nassistant:Hello": "b5610bf8-24b5-410a-9460-f14db4ed7d59",
+    "fp:user:سلام، فقط بگو سلام\n---\nassistant:سلام": "a7a5823d-c81f-4141-8aa8-eca70cee5b74",
+    "fp:user:یک جمله بگو\n---\nassistant:امز روز خوبی برای شروع دوباره است.": "cbe9b24d-e8b8-4d25-baab-428932d39acd",
+    "fp:user:سلام\n---\nassistant:سلام خوش آمدید 🌷 چطور میتوانم کمکتان کنم؟": "898afc1d-cfbf-491b-9a39-3d51ebf8a87f",
+    "fp:user:سلام\n---\nassistant:سلام چطور می‌تونم کمکتون کنم؟": "ae9e7eb1-74ca-4471-b996-c6b87cd88476"
   }
 }
