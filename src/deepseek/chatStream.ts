@@ -81,24 +81,26 @@ export async function streamPlainChat(
     emit(chatChunk(run, created, withRole, null));
   };
 
+  let outputStarted = false;
   for await (const update of iterDeepSeekUpdates(run.upstream)) {
     if (update.type === "ready") {
       responseMessageId = update.responseMessageId ?? responseMessageId;
     } else if (update.type === "reasoning" && update.delta) {
       reasoningText += update.delta;
-      if (responseText && reasoningSent) writeDelta({ reasoning_content: update.delta });
+      // Stream thinking live until the answer starts; later fragments are buffered.
+      if (!outputStarted) writeDelta({ reasoning_content: update.delta });
     } else if (update.type === "output" && update.delta) {
-      responseText += update.delta;
-      if (!reasoningSent && reasoningText) {
-        writeDelta({ reasoning_content: reasoningText });
-        reasoningSent = true;
+      if (!outputStarted) {
+        outputStarted = true;
+        reasoningSent = Boolean(reasoningText);
       }
+      responseText += update.delta;
       writeDelta({ content: update.delta });
     }
   }
 
   const finalText = responseText.trim() ? responseText : reasoningText;
-  if (!responseText.trim() && reasoningText) writeDelta({ content: reasoningText });
+  if (!responseText.trim() && reasoningText && !reasoningSent) writeDelta({ content: reasoningText });
   emit(finalChunk(run, created, "stop"));
   return {
     responseMessageId,
