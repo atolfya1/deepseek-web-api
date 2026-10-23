@@ -155,6 +155,7 @@ Tool calls can be buffered until protocol parsing is safe. Tool-only output must
 - Stream and non-stream modes are required.
 - Final text maps to `content`.
 - Thinking maps to `reasoning_content`.
+- Plain streaming must forward thinking deltas live as upstream produces them, before answer deltas; the answer must not be buffered until completion.
 - Parsed tools map to `tool_calls` with `finish_reason: "tool_calls"`.
 - Streaming ends with `[DONE]`.
 - Responses include local `conversation` and `previous_response_id` continuation hints.

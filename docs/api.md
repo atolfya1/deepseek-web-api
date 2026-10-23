@@ -141,7 +141,7 @@ Text chunks use:
 }
 ```
 
-Reasoning chunks use `delta.reasoning_content`. Tool calls use `delta.tool_calls`, and the final chunk sets `finish_reason` to `tool_calls` or `stop`.
+Reasoning chunks use `delta.reasoning_content`. Thinking deltas stream live as DeepSeek produces them, interleaved with `delta.content`; both arrive incrementally in the same SSE connection instead of waiting for the full answer. Tool calls use `delta.tool_calls`, and the final chunk sets `finish_reason` to `tool_calls` or `stop`.
 
 The server does not emit a separate usage-only streaming chunk. Configure clients such as Pi with `supportsUsageInStreaming: false` when available.
 
