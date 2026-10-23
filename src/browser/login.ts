@@ -199,6 +199,16 @@ export class LoginManager {
     return page;
   }
 
+  /** Try obtaining a browser page without throwing if Chrome is absent. */
+  async tryGetPage(): Promise<Page | null> {
+    if (!this.chrome.isConnected()) return null;
+    try {
+      return await this.page();
+    } catch {
+      return null;
+    }
+  }
+
   /** Write token + cookies into the managed browser once per connection. */
   private async hydrate(page: Page, auth: DeepSeekAuth): Promise<void> {
     if (this.hydrated && this.chrome.isConnected()) {

@@ -1,0 +1,7 @@
+{
+  "name": "deepseek-web-api",
+  "description": "Unofficial local OpenAI-compatible API for authenticated chat.deepseek.com web sessions",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

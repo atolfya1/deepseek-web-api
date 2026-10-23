@@ -8,6 +8,7 @@ import type { RequestBody } from "../deepseek/types.js";
 import { errorMessage, errorStatus } from "../utils/errors.js";
 import { readJsonBody, writeCorsPreflight, writeJson } from "../utils/http.js";
 import { requireApiKey } from "./authMiddleware.js";
+import { renderDashboardHtml } from "./dashboard.js";
 import type { ServerDependencies } from "./types.js";
 
 function pathname(request: IncomingMessage): string {
@@ -28,6 +29,15 @@ export async function routeRequest(
   const path = pathname(request);
   if (request.method === "GET" && path === "/health") {
     writeJson(response, 200, { ok: true });
+    return;
+  }
+  if (request.method === "GET" && (path === "/" || path === "/index.html")) {
+    const html = renderDashboardHtml(dependencies.apiKeys.length);
+    response.writeHead(200, {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-cache",
+    });
+    response.end(html);
     return;
   }
   if (path.startsWith("/v1/") && !requireApiKey(request, response, dependencies.apiKeys)) return;

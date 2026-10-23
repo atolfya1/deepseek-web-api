@@ -20,6 +20,7 @@ import {
 } from "./mapResponses.js";
 import { resolveModel, resolveSearch, resolveThinking } from "./models.js";
 import { prepareCompletion } from "./pow.js";
+import { prepareCompletionNode } from "./nodePow.js";
 import { buildDeepSeekPrompt, buildToolRecoveryPrompt } from "./promptBuild.js";
 import type { MessageId, SessionStore } from "./sessionStore.js";
 import { canonicalAssistantText } from "./toolCalls.js";
@@ -27,19 +28,9 @@ import { EMPTY_TOOL_RESPONSE_TEXT } from "./toolOutcome.js";
 import type { MessageTurn, ModelType, RequestBody } from "./types.js";
 
 interface PreparedRun extends ChatRun {
-  prompt: string;
-  parentMessageId: MessageId;
-  modelType: ModelType;
-  thinking: boolean;
-  search: boolean;
-  reusedSession: boolean;
-  convKey: string | null;
-  requestTurns: MessageTurn[];
-  instructionFingerprint: string;
-  toolsFingerprint: string;
-  latestUserText: string;
-  hasTools: boolean;
-  retry: number;
+  prompt: string; parentMessageId: MessageId; modelType: ModelType; thinking: boolean; search: boolean;
+  reusedSession: boolean; convKey: string | null; requestTurns: MessageTurn[]; instructionFingerprint: string;
+  toolsFingerprint: string; latestUserText: string; hasTools: boolean; retry: number;
 }
 interface CompletionAttempt<T> { value: T; diagnostics: CompletionDiagnostics }
 interface CompletionResult<T> extends CompletionAttempt<T> { run: PreparedRun; retry: number }
@@ -168,15 +159,26 @@ export class DeepSeekClient {
     if (!prompt) throw new HttpError(400, "empty input");
 
     const auth = await this.login.dumpCurrent();
-    const page = await this.login.page();
-    const prepared = await prepareCompletion({
-      page,
-      powWorkerUrl: this.config.powWorkerUrl,
-      modelType,
-      fallbackToken: auth.token,
-      sessionId: retryFrom ? null : reusedSession ? conversation?.sessionId ?? null : null,
-      reuseSession: retryFrom ? false : reusedSession,
-    });
+    const page = await this.login.tryGetPage();
+    const sessionId = retryFrom ? null : reusedSession ? conversation?.sessionId ?? null : null;
+    const reuseSession = retryFrom ? false : reusedSession;
+    const prepared = page
+      ? await prepareCompletion({
+          page,
+          powWorkerUrl: this.config.powWorkerUrl,
+          modelType,
+          fallbackToken: auth.token,
+          sessionId,
+          reuseSession,
+        })
+      : await prepareCompletionNode({
+          baseUrl: this.config.baseUrl,
+          powWorkerUrl: this.config.powWorkerUrl,
+          auth,
+          modelType,
+          sessionId,
+          reuseSession,
+        });
     const parentMessageId = retryFrom
       ? null
       : reusedSession

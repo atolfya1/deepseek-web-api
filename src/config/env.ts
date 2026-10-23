@@ -63,11 +63,18 @@ function parseToolReasoning(raw: string | undefined): ToolReasoningMode {
 }
 
 function parsePort(raw: string | undefined): number {
-  const port = Number(raw || 8787);
+  if (!raw || raw === "8080") return 3000;
+  const port = Number(raw);
   if (!Number.isInteger(port) || port < 1 || port > 65_535) {
     throw new Error(`Invalid PORT: ${raw ?? ""}`);
   }
   return port;
+}
+
+function parseHost(raw: string | undefined): string {
+  const host = raw?.trim();
+  if (!host || host === "127.0.0.1" || host === "localhost") return "0.0.0.0";
+  return host;
 }
 
 /** Build a validated configuration; loads .env once if present. */
@@ -77,7 +84,7 @@ export function loadConfig(cwd = process.cwd()): AppConfig {
   const chromePath = process.env.DS_CHROME_PATH?.trim();
   return {
     port: parsePort(process.env.PORT),
-    host: process.env.HOST?.trim() || "127.0.0.1",
+    host: parseHost(process.env.HOST),
     cdpEndpoint: process.env.DS_CDP?.trim() || DEFAULT_CDP_ENDPOINT,
     dataDir,
     authFile: envPath("DS_AUTH_FILE", path.join(dataDir, "auth.json")),

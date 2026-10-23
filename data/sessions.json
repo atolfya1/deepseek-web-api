@@ -1,0 +1,40 @@
+{
+  "sessions": {
+    "e3d91d12-941c-446f-8d08-d88f40bd8ced": {
+      "lastResponseMessageId": 2,
+      "updatedAt": 1792760754524,
+      "turns": [
+        {
+          "role": "user",
+          "content": "hi there"
+        },
+        {
+          "role": "assistant",
+          "content": "Hi How's it going? What can I help you with today?"
+        }
+      ],
+      "lastModelType": "default",
+      "modelType": "default"
+    },
+    "b5610bf8-24b5-410a-9460-f14db4ed7d59": {
+      "lastResponseMessageId": 2,
+      "lastModelType": "default",
+      "modelType": "default",
+      "updatedAt": 1792762858880,
+      "turns": [
+        {
+          "role": "user",
+          "content": "Say hello in one word"
+        },
+        {
+          "role": "assistant",
+          "content": "Hello"
+        }
+      ]
+    }
+  },
+  "convs": {
+    "fp:user:hi there\n---\nassistant:Hi How's it going? What can I help you with today?": "e3d91d12-941c-446f-8d08-d88f40bd8ced",
+    "fp:user:Say hello in one word\n---\nassistant:Hello": "b5610bf8-24b5-410a-9460-f14db4ed7d59"
+  }
+}

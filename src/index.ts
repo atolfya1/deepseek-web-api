@@ -39,7 +39,13 @@ async function buildRuntime() {
 async function start(): Promise<void> {
   const { config, logger, client } = await buildRuntime();
   const apiKey = loadApiKey(config.apiKeyFile);
-  await client.initialize();
+  try {
+    await client.initialize();
+  } catch (error) {
+    logger.warn(
+      `DeepSeek client initialization: ${errorMessage(error)} (server running in standby mode; configure DS_CDP, DS_AUTH_FILE, or request /v1 to retry)`,
+    );
+  }
   const server = createServer({ client, apiKeys: apiKey.keys, debug: config.debug });
   await listen(server, config.port, config.host);
   logger.info(`deepseek-web-api 已启动：http://${config.host}:${config.port}`);
