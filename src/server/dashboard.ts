@@ -57,7 +57,7 @@ export function renderDashboardHtml(apiKeysCount: number): string {
         <h1><span class="pulse-dot"></span> deepseek-web-api</h1>
         <span class="badge badge-success">Port 3000 Active</span>
       </div>
-      <p class="desc">Unofficial OpenAI-compatible API proxy for authenticated DeepSeek Web sessions.</p>
+      <p class="desc">Unofficial OpenAI-compatible API proxy for authenticated DeepSeek Web sessions with file upload support.</p>
     </header>
 
     <div class="grid">
@@ -72,9 +72,9 @@ export function renderDashboardHtml(apiKeysCount: number): string {
         ${apiKeyNotice}
       </div>
       <div class="card">
-        <div class="card-title">Compatible Models</div>
-        <div class="card-value">2 Models</div>
-        <span class="badge badge-neutral">deepseek-chat &bull; deepseek-reasoner</span>
+        <div class="card-title">Direct File Upload</div>
+        <div class="card-value">Enabled</div>
+        <span class="badge badge-success">chat.deepseek.com direct</span>
       </div>
     </div>
 
@@ -90,8 +90,12 @@ export function renderDashboardHtml(apiKeysCount: number): string {
           <span style="color: var(--text-muted)">OpenAI-compatible models catalog</span>
         </div>
         <div class="endpoint-item">
+          <div><span class="method method-post">POST</span> <span>/v1/files</span></div>
+          <span style="color: var(--text-muted)">Upload documents/images directly to DeepSeek Web</span>
+        </div>
+        <div class="endpoint-item">
           <div><span class="method method-post">POST</span> <span>/v1/chat/completions</span></div>
-          <span style="color: var(--text-muted)">Streaming & non-streaming chat with thinking</span>
+          <span style="color: var(--text-muted)">Chat completions with thinking & ref_file_ids</span>
         </div>
         <div class="endpoint-item">
           <div><span class="method method-post">POST</span> <span>/v1/responses</span></div>
@@ -101,47 +105,62 @@ export function renderDashboardHtml(apiKeysCount: number): string {
     </section>
 
     <section>
-      <h2>Interactive API Console</h2>
+      <h2>Interactive API Console & File Upload</h2>
       <div class="console-controls">
         <button id="btnHealth" type="button">Test /health</button>
         <button id="btnModels" type="button">Test /v1/models</button>
         <button id="btnChat" type="button">Test Chat Completion</button>
         <input id="apiKeyInput" type="text" placeholder="API Key (optional, defaults to data/.api-key if known)">
       </div>
-      <pre id="outputLog">Click a button above to run a live probe against the server.</pre>
+      <div style="margin: 0.75rem 0 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <input id="filePicker" type="file" style="background: var(--code-bg); color: var(--text); padding: 0.4rem; border-radius: 0.5rem; border: 1px solid var(--border);">
+        <button id="btnUpload" type="button" style="background: #22c55e; color: #0f172a;">Upload to DeepSeek</button>
+        <span id="uploadedFileBadge" style="font-size: 0.85rem; color: var(--text-muted);">No file attached</span>
+      </div>
+      <pre id="outputLog">Click a button above or pick a file to upload directly to chat.deepseek.com.</pre>
     </section>
 
     <section>
-      <h2>Quick Connection Guide</h2>
+      <h2>File Upload API Usage</h2>
       <p style="color: var(--text-muted); font-size: 0.9rem;">
-        Configure your favorite LLM client (e.g. Pi, Chatbox, NextChat, or the official OpenAI SDK) with:
+        You can upload files via standard <code>POST /v1/files</code> or pass files directly inside <code>POST /v1/chat/completions</code>:
       </p>
-      <pre class="guide-code">Base URL: http://localhost:3000/v1
-API Key:  sk-ds-... (from data/.api-key)
-Models:   deepseek-chat, deepseek-reasoner</pre>
-      <p style="color: var(--text-muted); font-size: 0.85rem;">
-        Credentials loaded: <code>data/auth.json</code> is active with pure Node.js in-process PoW solver.
-      </p>
+      <pre class="guide-code"># 1. Upload a file directly:
+curl -X POST http://localhost:3000/v1/files \\
+  -H "Authorization: Bearer sk-ds-..." \\
+  -F "file=@document.pdf"
+
+# 2. Ask DeepSeek to analyze the file:
+curl -X POST http://localhost:3000/v1/chat/completions \\
+  -H "Authorization: Bearer sk-ds-..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "deepseek-chat",
+    "messages": [{"role": "user", "content": "Analyze this file"}],
+    "ref_file_ids": ["file-8bbdc584-9894-4f99-bf46-018d57311779"]
+  }'</pre>
     </section>
   </div>
 
   <script>
     const output = document.getElementById("outputLog");
     const keyInput = document.getElementById("apiKeyInput");
+    const filePicker = document.getElementById("filePicker");
+    const badge = document.getElementById("uploadedFileBadge");
+    let currentFileId = null;
 
-    function getHeaders() {
-      const headers = { "Content-Type": "application/json", "Accept": "application/json" };
+    function getHeaders(isJson = true) {
+      const headers = { "Accept": "application/json" };
+      if (isJson) headers["Content-Type"] = "application/json";
       const key = keyInput.value.trim();
-      if (key) {
-        headers["Authorization"] = key.startsWith("Bearer ") ? key : "Bearer " + key;
-      }
+      if (key) headers["Authorization"] = key.startsWith("Bearer ") ? key : "Bearer " + key;
       return headers;
     }
 
     async function probe(url, options = {}) {
       output.textContent = "Requesting " + url + "...";
       try {
-        const res = await fetch(url, { headers: getHeaders(), ...options });
+        const res = await fetch(url, options);
         const json = await res.json();
         output.textContent = "HTTP " + res.status + " " + res.statusText + "\\n" + JSON.stringify(json, null, 2);
       } catch (err) {
@@ -149,15 +168,51 @@ Models:   deepseek-chat, deepseek-reasoner</pre>
       }
     }
 
-    document.getElementById("btnHealth").addEventListener("click", () => probe("/health"));
-    document.getElementById("btnModels").addEventListener("click", () => probe("/v1/models"));
+    document.getElementById("btnHealth").addEventListener("click", () => probe("/health", { headers: getHeaders() }));
+    document.getElementById("btnModels").addEventListener("click", () => probe("/v1/models", { headers: getHeaders() }));
+
+    document.getElementById("btnUpload").addEventListener("click", async () => {
+      const file = filePicker.files && filePicker.files[0];
+      if (!file) {
+        output.textContent = "Please select a file first using the file picker.";
+        return;
+      }
+      output.textContent = "Uploading " + file.name + " (" + file.size + " bytes) directly to chat.deepseek.com...";
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch("/v1/files", {
+          method: "POST",
+          headers: getHeaders(false),
+          body: formData,
+        });
+        const json = await res.json();
+        if (json && json.id) {
+          currentFileId = json.id;
+          badge.textContent = "Attached: " + json.filename + " (" + json.id + ")";
+          badge.style.color = "#4ade80";
+        }
+        output.textContent = "Upload result:\\n" + JSON.stringify(json, null, 2);
+      } catch (err) {
+        output.textContent = "Upload error: " + (err && err.message ? err.message : String(err));
+      }
+    });
+
     document.getElementById("btnChat").addEventListener("click", () => {
+      const payload = {
+        model: "deepseek-chat",
+        messages: [{
+          role: "user",
+          content: currentFileId
+            ? "Please analyze the uploaded file and summarize its main points."
+            : "Hello from DeepSeek Web API!"
+        }],
+      };
+      if (currentFileId) payload.ref_file_ids = [currentFileId];
       probe("/v1/chat/completions", {
         method: "POST",
-        body: JSON.stringify({
-          model: "deepseek-chat",
-          messages: [{ role: "user", content: "Hello from DeepSeek Web API!" }]
-        })
+        headers: getHeaders(true),
+        body: JSON.stringify(payload),
       });
     });
   </script>

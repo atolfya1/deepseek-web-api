@@ -12,6 +12,7 @@ export interface CompletionRequest {
   thinking: boolean;
   search: boolean;
   parentMessageId: MessageId;
+  refFileIds?: string[];
 }
 
 /** Send the compatibility prompt and stored parent message ID to preserve lineage. */
@@ -41,7 +42,7 @@ export async function openCompletionStream(
       parent_message_id: input.parentMessageId,
       model_type: input.modelType,
       prompt: input.prompt,
-      ref_file_ids: [],
+      ref_file_ids: input.refFileIds ?? [],
       thinking_enabled: input.thinking,
       search_enabled: input.search,
       action: null,

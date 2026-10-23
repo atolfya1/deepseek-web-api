@@ -5,7 +5,7 @@ import { CLIENT_HEADERS, COMPLETION_PATH } from "../config/constants.js";
 import type { DeepSeekAuth, ModelType } from "./types.js";
 import type { PreparedCompletion } from "./pow.js";
 
-interface ChallengeData {
+export interface ChallengeData {
   algorithm: string;
   challenge: string;
   salt: string;
@@ -15,7 +15,7 @@ interface ChallengeData {
   expireAt?: number;
 }
 
-interface PowAnswer {
+export interface PowAnswer {
   algorithm: string;
   challenge: string;
   salt: string;

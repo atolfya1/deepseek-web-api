@@ -21,6 +21,7 @@ import {
 import { resolveModel, resolveSearch, resolveThinking } from "./models.js";
 import { prepareCompletion } from "./pow.js";
 import { prepareCompletionNode } from "./nodePow.js";
+import { resolveRefFileIds, uploadFileToDeepSeek } from "./fileUpload.js";
 import { buildDeepSeekPrompt, buildToolRecoveryPrompt } from "./promptBuild.js";
 import type { MessageId, SessionStore } from "./sessionStore.js";
 import { canonicalAssistantText } from "./toolCalls.js";
@@ -185,6 +186,7 @@ export class DeepSeekClient {
         ? conversation?.parentMessageId ?? this.sessions.get(prepared.sessionId)?.lastResponseMessageId ?? null
         : null;
     const currentAuth = await this.login.dumpCurrent();
+    const refFileIds = await resolveRefFileIds(this.config, currentAuth, body);
     const upstream = await openCompletionStream(this.config.baseUrl, currentAuth, {
       token: prepared.token,
       powHeader: prepared.powHeader,
@@ -194,17 +196,12 @@ export class DeepSeekClient {
       thinking,
       search,
       parentMessageId,
+      refFileIds,
     });
     const retry = retryFrom ? retryFrom.retry + 1 : 0;
     this.logger.debug("DeepSeek completion prepared", {
-      sessionId: prepared.sessionId,
-      reused: reusedSession,
-      parentMessageId,
-      promptChars: prompt.length,
-      retry,
-      modelType,
-      thinking,
-      search,
+      sessionId: prepared.sessionId, reused: reusedSession, parentMessageId,
+      promptChars: prompt.length, retry, modelType, refFiles: refFileIds.length,
     });
     return {
       upstream,
@@ -255,17 +252,17 @@ export class DeepSeekClient {
     if (diagnostics.emptyUpstream) this.logger.info("DeepSeek upstream returned empty channels", fields);
   }
 
+  async uploadFile(input: { data: Buffer | Uint8Array | string; filename: string; contentType?: string | undefined }) {
+    const auth = await this.login.dumpCurrent();
+    return uploadFileToDeepSeek(this.config, auth, input);
+  }
+
   private logFields(run: PreparedRun, diagnostics: CompletionDiagnostics): Record<string, unknown> {
     return {
-      sessionId: run.sessionId,
-      reused: run.reusedSession,
-      parentMessageId: run.parentMessageId,
-      promptChars: run.prompt.length,
-      reasoningChars: diagnostics.reasoningChars,
-      outputChars: diagnostics.outputChars,
-      toolCallCount: diagnostics.toolCallCount,
-      emptyUpstream: diagnostics.emptyUpstream,
-      retry: run.retry,
+      sessionId: run.sessionId, reused: run.reusedSession, parentMessageId: run.parentMessageId,
+      promptChars: run.prompt.length, reasoningChars: diagnostics.reasoningChars,
+      outputChars: diagnostics.outputChars, toolCallCount: diagnostics.toolCallCount,
+      emptyUpstream: diagnostics.emptyUpstream, retry: run.retry,
     };
   }
 
